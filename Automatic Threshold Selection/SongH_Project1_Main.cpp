@@ -45,8 +45,10 @@ class ThresholdSelection {
       while(!inFile.eof()){
         inFile >> histIndex;
         inFile >> histValue;
-        histAry[histIndex] = histValue;
-        largestHistValue = max(histValue, largestHistValue);
+        if(histIndex < maxVal+1){
+          histAry[histIndex] = histValue;
+          largestHistValue = max(histValue, largestHistValue);
+        }
       }
       this->histHeight = largestHistValue;
       this->graph = new char*[maxVal+1];
@@ -67,16 +69,13 @@ class ThresholdSelection {
       // output header values for outFile1
       outFile1 << numRows << " " << numCols << " " << minVal << " " << maxVal << endl;
       // output 2D histogram along with caption
-      for(int i = 0; i < maxVal+1; i++){
-        outFile1 << i << " (" << histAry[i] << "):" << string(histAry[i], HISTOGRAM_CHAR);
-        if(i+1 < maxVal+1){
-          outFile1 << endl;
-        }
+      for(int i = minVal; i < maxVal+1; i++){
+        outFile1 << i << " (" << histAry[i] << "):" << string(histAry[i], HISTOGRAM_CHAR) << endl;
       }
     }
 
     void plotHist(){
-      for(int i = 0; i < maxVal+1; i++){
+      for(int i = minVal; i < maxVal+1; i++){
         for(int j = 0; j < histAry[i]; j++){
           graph[i][j] = HISTOGRAM_CHAR;
         }
@@ -99,7 +98,7 @@ class ThresholdSelection {
         // Step 1, setZero to GaussAry
         setZero(gaussAry, maxVal+1);
         // Step 2-3 fit first and second Gaussian curve
-        sum1 = fitGauss(0, dividePt, deBugFile);
+        sum1 = fitGauss(minVal, dividePt, deBugFile);
         sum2 = fitGauss(dividePt, maxVal, deBugFile);
         // Step 4, compute total value
         total = sum1 + sum2;
@@ -256,7 +255,7 @@ int main(int argc, const char* argv[]){
 
   // Step 3, print graph (currently histogram without Gaussian curve) to deBugFile
   char** graph = thresholdSelection.getGraph();
-  for(int i = 0; i < maxVal+1; i++){
+  for(int i = minVal; i < maxVal+1; i++){
     for(int j = 0; j < histHeight+1; j++){
       deBugFile << graph[i][j];
     }
@@ -269,12 +268,12 @@ int main(int argc, const char* argv[]){
   // Step 6, plotGaussCurve
   thresholdSelection.plotGaussCurves(deBugFile);
   // Step 7, output graph to outputFile2
-  for(int i = 0; i < maxVal+1; i++){
+  for(int i = minVal; i < maxVal+1; i++){
     for(int j = 0; j < histHeight+1; j++){
       outFile2 << graph[i][j];
     }
     outFile2 << endl;
   }
-
+  
   return 0;
 }
