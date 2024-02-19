@@ -19,12 +19,97 @@ class ThresholdSelection {
     int* bestFitGaussAry;
     char** graph;
     const char HISTOGRAM_CHAR = '+';
+    const char GAUSSIAN_CURVE_CHAR = '*';
+    const char DELTA_CHAR = '#';
 
     void setZero(int* arr, int size){
       for(int i = 0; i < size; i++){
         arr[i] = 0;
       }
     }
+
+    double fitGauss(int leftIndex, int rightIndex, ofstream &deBugFile){
+      // Step 0, output debug print and initialize variables
+      deBugFile << "Entering fitGauss method" << endl;
+      double mean, var, sum, Gval;
+      sum = 0.0;
+      // Step 1, compute mean and variance
+      mean = computeMean(leftIndex, rightIndex, deBugFile);
+      var = computeVar(leftIndex, rightIndex, mean, deBugFile);
+      // Step 2, set index iterator variable
+      int index = leftIndex;
+      while(index <= rightIndex){
+        // Step 3, calculate Gauss value
+        Gval = modifiedGauss(index, mean, var);
+        // Step 4, compute sum
+        sum += abs(Gval - (double) histAry[index]);
+        // Step 5, update guassAry
+        gaussAry[index] = (int) Gval;
+        // Step 6, increment index
+        index++;
+      }
+      // Step 8, print debug statement
+      deBugFile << "Leaving fitGauss method, sum is: " << sum << endl;
+      // Step 9, return sum
+      return sum;
+    }
+
+    double computeMean(int leftIndex, int rightIndex, ofstream &deBugFile){
+      // Step 0, output debug print and initialize variables
+      deBugFile << "Entering computeMean method" << endl;
+      maxHeight = 0;
+      int sum = 0;
+      int numPixels = 0;
+      // Step 1, initialize index iterater variable
+      int index = leftIndex;
+      // Step 2-5, loop to compute mean
+      while(index < rightIndex){
+        sum += (histAry[index] * index);
+        numPixels += histAry[index];
+        if(histAry[index] > maxHeight){
+          maxHeight = histAry[index];
+        }
+        index++;
+      }
+      // Step 6, store result
+      double result = ((double) sum) / ((double) numPixels);
+      // Step 7, output debug statement
+      deBugFile << "Leaving computeMean method " << maxHeight << " is an result " << result << endl;
+      // Step 8, return
+      return result;
+    }
+
+    double computeVar(int leftIndex, int rightIndex, double mean, ofstream &deBugFile){
+      // Step 0, output to debug file and initialize variable
+      deBugFile << "Entering computeVar() method" << endl;
+      double sum = 0.0;
+      int numPixels = 0;
+      // Step 1, initialize index iterator variable
+      int index = leftIndex;
+      // Step 2-4, computeVar in a loop
+      while(index < rightIndex){
+        sum += ((double) histAry[index]) * pow((((double) index) - mean), 2);
+        numPixels += histAry[index];
+        index++;
+      }
+      // Step 5, compute result
+      double result = sum / ((double) numPixels);
+      // Step 6, print debug statement
+      deBugFile << "Leaving computeVar method returning " << result << endl;
+      // Step 7, return result
+      return result;
+    }
+
+    double modifiedGauss(int x, double mean, double var){
+      return ((double) maxHeight) * exp((-1) * (pow((((double) x) - mean), 2) / (2 * var)));
+    }
+
+    void copyArys(int* arr1, int* arr2, int size){
+      for(int i = 0; i < size; i++){
+        arr2[i] = arr1[i];
+      }
+    }
+
   public:
     ThresholdSelection(int numRows, int numCols, int minVal, int maxVal){
       this->numRows = numRows;
@@ -116,88 +201,6 @@ class ThresholdSelection {
       return bestThr;
     }
 
-    double fitGauss(int leftIndex, int rightIndex, ofstream &deBugFile){
-      // Step 0, output debug print and initialize variables
-      deBugFile << "Entering fitGauss method" << endl;
-      double mean, var, sum, Gval;
-      sum = 0.0;
-      // Step 1, compute mean and variance
-      mean = computeMean(leftIndex, rightIndex, deBugFile);
-      var = computeVar(leftIndex, rightIndex, mean, deBugFile);
-      // Step 2, set index iterator variable
-      int index = leftIndex;
-      while(index <= rightIndex){
-        // Step 3, calculate Gauss value
-        Gval = modifiedGauss(index, mean, var);
-        // Step 4, compute sum
-        sum += abs(Gval - (double) histAry[index]);
-        // Step 5, update guassAry
-        gaussAry[index] = (int) Gval;
-        // Step 6, increment index
-        index++;
-      }
-      // Step 8, print debug statement
-      deBugFile << "Leaving fitGauss method, sum is: " << sum << endl;
-      // Step 9, return sum
-      return sum;
-    }
-
-    double computeMean(int leftIndex, int rightIndex, ofstream &deBugFile){
-      // Step 0, output debug print and initialize variables
-      deBugFile << "Entering computeMean method" << endl;
-      maxHeight = 0;
-      int sum = 0;
-      int numPixels = 0;
-      // Step 1, initialize index iterater variable
-      int index = leftIndex;
-      // Step 2-5, loop to compute mean
-      while(index < rightIndex){
-        sum += (histAry[index] * index);
-        numPixels += histAry[index];
-        if(histAry[index] > maxHeight){
-          maxHeight = histAry[index];
-        }
-        index++;
-      }
-      // Step 6, store result
-      double result = ((double) sum) / ((double) numPixels);
-      // Step 7, output debug statement
-      deBugFile << "Leaving computeMean method " << maxHeight << " is an result " << result << endl;
-      // Step 8, return
-      return result;
-    }
-
-    double computeVar(int leftIndex, int rightIndex, double mean, ofstream &deBugFile){
-      // Step 0, output to debug file and initialize variable
-      deBugFile << "Entering computeVar() method" << endl;
-      double sum = 0.0;
-      int numPixels = 0;
-      // Step 1, initialize index iterator variable
-      int index = leftIndex;
-      // Step 2-4, computeVar in a loop
-      while(index < rightIndex){
-        sum += ((double) histAry[index]) * pow((((double) index) - mean), 2);
-        numPixels += histAry[index];
-        index++;
-      }
-      // Step 5, compute result
-      double result = sum / ((double) numPixels);
-      // Step 6, print debug statement
-      deBugFile << "Leaving computeVar method returning " << result << endl;
-      // Step 7, return result
-      return result;
-    }
-
-    double modifiedGauss(int x, double mean, double var){
-      return ((double) maxHeight) * exp((-1) * (pow((((double) x) - mean), 2) / (2 * var)));
-    }
-
-    void copyArys(int* arr1, int* arr2, int size){
-      for(int i = 0; i < size; i++){
-        arr2[i] = arr1[i];
-      }
-    }
-
     void plotGaussCurves(ofstream &deBugFile){
       // Step 0, print debug statement
       deBugFile << "Entering plotGaussCurves() method" << endl;
@@ -215,10 +218,10 @@ class ThresholdSelection {
         }
         i = end1;
         while(i <= end2){
-          graph[index][i] = '#';
+          graph[index][i] = DELTA_CHAR;
           i++;
         }
-        graph[index][bestFitGaussAry[index]] = '*';
+        graph[index][bestFitGaussAry[index]] = GAUSSIAN_CURVE_CHAR;
         index++;
       }
       // Step 9, print out debug statement
@@ -232,21 +235,23 @@ int main(int argc, const char* argv[]){
   ofstream outFile2;
   ofstream deBugFile;
   int numRows, numCols, minVal, maxVal, histHeight;
+
   // Step 0, open files
   inFile.open(argv[1]);
   outFile1.open(argv[2]);
   outFile2.open(argv[3]);
   deBugFile.open(argv[4]);
-
   if(!inFile.is_open() || !outFile1.is_open() || !outFile2.is_open() || !deBugFile.is_open()){
     cout << "Unable to open provided files" << endl;
     exit(1);
   }
+
   // Step 1, read from inFile1
   inFile >> numRows;
   inFile >> numCols;
   inFile >> minVal;
   inFile >> maxVal;
+
   // Step 2, call dispHist to output to outFile1
   ThresholdSelection thresholdSelection = ThresholdSelection(numRows, numCols, minVal, maxVal);
   histHeight = thresholdSelection.loadHist(inFile);
@@ -261,12 +266,16 @@ int main(int argc, const char* argv[]){
     }
     deBugFile << endl;
   }
+
   // Step 4, perform biGaussian operation
   int biGaussThrVal = thresholdSelection.biGaussian(deBugFile);
+
   // Step 5, output biGaussThrVal to outFile2
   outFile2 << "The BiGaussThrVal is " << biGaussThrVal << endl;
+
   // Step 6, plotGaussCurve
   thresholdSelection.plotGaussCurves(deBugFile);
+
   // Step 7, output graph to outputFile2
   for(int i = minVal; i < maxVal+1; i++){
     for(int j = 0; j < histHeight+1; j++){
@@ -274,6 +283,9 @@ int main(int argc, const char* argv[]){
     }
     outFile2 << endl;
   }
+
+  // Step 8, ofstream and ifstream destructor will automatically close the file
+  // hence no reason to manually close them in this application.
   
   return 0;
 }
